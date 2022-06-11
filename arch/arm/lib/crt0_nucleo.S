@@ -113,16 +113,21 @@ ENTRY(_main)
 	bl	board_init_f_alloc_reserve
 	mov	sp, r0
 	/* set up gd here, outside any C code */
-	mov	r9, r0
+    ldr r1, =CONFIG_SYS_GLOBAL_DATA_POINTER
+	str r0, [r1]
 	bl	board_init_f_init_reserve
 
 	mov	r0, #0x800                  /* GD_FLG_SKIP_RELOC */
 	bl	board_init_f
 
-	ldr	r0, [r9, #GD_START_ADDR_SP]	/* sp = gd->start_addr_sp */
+    ldr r2, =CONFIG_SYS_GLOBAL_DATA_POINTER
+    ldr r1, [r2]
+	ldr	r0, [r1, #GD_START_ADDR_SP]	/* sp = gd->start_addr_sp */
 	bic	r0, r0, #7	                /* 8-byte alignment for ABI compliance */
 	mov	sp, r0
-	ldr	r9, [r9, #GD_NEW_GD]		/* r9 <- gd->new_gd */
+	ldr	r0, [r1, #GD_NEW_GD]		/* global data pointer <- gd->new_gd */
+	str r0, [r2]
+
 
 /*
  * now relocate vectors
@@ -138,8 +143,9 @@ ENTRY(_main)
 	bl red_led_on
 
 	/* call board_init_r(gd_t *id, ulong dest_addr) */
-	mov     r0, r9                  /* gd_t */
-	ldr	r1, [r9, #GD_RELOCADDR]	/* dest_addr */
+    ldr r2, =CONFIG_SYS_GLOBAL_DATA_POINTER
+    ldr r0, [r2]
+	ldr	r1, [r2, #GD_RELOCADDR]	/* dest_addr */
 	/* call board_init_r */
 	ldr	lr, =board_init_r	/* this is auto-relocated! */
 	bx	lr
